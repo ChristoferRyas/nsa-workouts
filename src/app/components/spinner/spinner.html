@@ -1,0 +1,25 @@
+<div class="spinner-container">
+  <div class="wheel-container">
+    <div class="wheel" [class.spinning]="isSpinning()" [style.transform]="'rotate(' + rotation() + 'deg)'">
+      @for (workout of workouts(); track workout.id; let i = $index) {
+        <div class="segment" [ngStyle]="getSegmentStyle(i)">
+          <div class="segment-text" [ngStyle]="getTextStyle(i)">
+            {{ workout.name }}
+          </div>
+        </div>
+      }
+    </div>
+    <div class="pointer"></div>
+  </div>
+
+  <button class="spin-button" (click)="spin()" [disabled]="isSpinning()">
+    {{ isSpinning() ? 'Spinning...' : 'Spin!' }}
+  </button>
+
+  @if (selectedWorkout()) {
+    <div class="result">
+      <h2>Selected Workout:</h2>
+      <p class="workout-name">{{ selectedWorkout()!.name }}</p>
+    </div>
+  }
+</div>

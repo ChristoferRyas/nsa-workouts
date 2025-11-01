@@ -1,0 +1,105 @@
+<div class="start-container">
+  <h1 class="start-title">Norwegian singles workout generator</h1>
+
+  <div class="input-row">
+    <div class="input-group">
+      <label for="estimatedTime">Estimated 10km time (minutes):</label>
+      <input
+        id="estimatedTime"
+        type="number"
+        [ngModel]="estimatedTime()"
+        (ngModelChange)="onTimeChange($event)"
+        placeholder="Enter time in minutes"
+        min="1"
+        class="time-input"
+      />
+    </div>
+
+    <div class="input-group">
+      <label for="totalTime"
+        >Total workout time in minutes<br />(excluding warmup & cooldown) :</label
+      >
+      <input
+        id="totalTime"
+        type="number"
+        [ngModel]="totalIntervalTime()"
+        (ngModelChange)="onTotalTimeChange($event)"
+        placeholder="Enter total time"
+        min="1"
+        class="time-input"
+      />
+    </div>
+  </div>
+
+  <div class="content-layout">
+    <div class="workouts-section">
+      <h3>Select Workouts</h3>
+      @for (categoryGroup of workoutsByCategory(); track categoryGroup.category) {
+      <div class="category-group">
+        <h4 class="category-title">{{ categoryGroup.category }}</h4>
+        <div class="workouts-list">
+          @for (workout of categoryGroup.workouts; track workout.id) {
+          <div class="workout-item">
+            <input
+              type="checkbox"
+              [id]="'workout-' + workout.id"
+              [checked]="isWorkoutIncluded(workout.id)"
+              (change)="toggleWorkout(workout.id, $event)"
+              class="workout-checkbox"
+            />
+            <label [for]="'workout-' + workout.id" class="workout-label">
+              <div class="workout-name">{{ workout.name }}</div>
+            </label>
+          </div>
+          }
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="spinner-section">
+      <h3>Spin to Select</h3>
+      <app-spinner
+        [workouts]="availableWorkouts()"
+        (workoutSelected)="onWorkoutSelected($event)"
+      ></app-spinner>
+    </div>
+  </div>
+
+  @if (selectedWorkout()) {
+  <div class="pace-display">
+    <h2>{{ selectedWorkout()!.name }}</h2>
+
+    <div class="workout-summary">
+      @if (calculatedSets() !== null && calculatedSets()! > 0) {
+      <div class="summary-item">
+        <span class="summary-label">Sets:</span>
+        <span class="summary-value">{{ calculatedSets() }}</span>
+      </div>
+      } @if (selectedWorkout()!.duration !== undefined) {
+      <div class="summary-item">
+        <span class="summary-label">Duration:</span>
+        <span class="summary-value">{{ selectedWorkout()!.duration }}s</span>
+      </div>
+      } @else if (selectedWorkout()!.distance !== undefined) {
+      <div class="summary-item">
+        <span class="summary-label">Distance:</span>
+        <span class="summary-value">{{ selectedWorkout()!.distance }}m</span>
+      </div>
+      } @if (selectedWorkout()!.rest !== undefined) {
+      <div class="summary-item">
+        <span class="summary-label">Rest:</span>
+        <span class="summary-value">{{ selectedWorkout()!.rest }}s</span>
+      </div>
+      }
+    </div>
+
+    @if (suggestedPace()) {
+    <div class="pace-section">
+      <h3>Suggested Pace</h3>
+      <p class="pace-value">{{ formatPace(suggestedPace()!) }} min/km</p>
+    </div>
+    }
+  </div>
+  }
+</div>
