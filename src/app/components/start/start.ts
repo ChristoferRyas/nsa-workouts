@@ -1,13 +1,13 @@
 import { Component, signal, OnInit, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Spinner } from '../spinner/spinner';
 import { workouts } from '../../data/workouts';
 import { workout, WorkoutCategory } from '../../interfaces/workout';
 import { calculatePace, convertDistanceToDuration } from '../../utils/pace';
 
 @Component({
   selector: 'app-start',
-  imports: [Spinner, FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './start.html',
   styleUrl: './start.scss'
 })
@@ -25,6 +25,11 @@ export class Start implements OnInit {
   protected selectedWorkout = signal<workout | null>(null);
   protected suggestedPace = signal<number | null>(null);
   protected calculatedSets = signal<number | null>(null);
+  protected highlightedWorkoutId = signal<number | null>(null);
+  protected isRandomizing = signal(false);
+
+  private intervalId: any = null;
+  private currentIndex = 0;
 
   protected availableWorkouts = computed(() => {
     const excluded = this.excludedWorkoutIds();
@@ -141,7 +146,7 @@ export class Start implements OnInit {
     this.saveExcludedWorkouts();
   }
 
-  onWorkoutSelected(workout: workout) {
+  selectWorkout(workout: workout) {
     this.selectedWorkout.set(workout);
 
     const time = this.estimatedTime();
@@ -180,6 +185,74 @@ export class Start implements OnInit {
       this.suggestedPace.set(null);
       console.log('Selected workout:', workout);
     }
+  }
+
+  onWorkoutClick(workout: workout, event: Event) {
+    // Prevent the label from toggling the checkbox
+    event.preventDefault();
+    this.selectWorkout(workout);
+  }
+
+  randomSelect() {
+    if (this.isRandomizing()) return;
+
+    const available = this.availableWorkouts();
+    if (available.length === 0) return;
+
+    this.isRandomizing.set(true);
+    this.selectedWorkout.set(null);
+    this.currentIndex = 0;
+
+    // Randomly select a workout
+    const selectedIndex = Math.floor(Math.random() * available.length);
+    const selected = available[selectedIndex];
+
+    // Calculate how many iterations before slowing down
+    const minIterations = 15;
+    const extraIterations = Math.floor(Math.random() * 10);
+    const totalIterations = minIterations + extraIterations + selectedIndex;
+
+    let iteration = 0;
+    let delay = 50; // Start fast
+
+    const highlight = () => {
+      const currentWorkout = available[this.currentIndex];
+      this.highlightedWorkoutId.set(currentWorkout.id);
+      this.currentIndex = (this.currentIndex + 1) % available.length;
+      iteration++;
+
+      if (iteration >= totalIterations && this.currentIndex === selectedIndex) {
+        // We've reached the target
+        if (this.intervalId) clearInterval(this.intervalId);
+
+        setTimeout(() => {
+          this.isRandomizing.set(false);
+          this.selectWorkout(selected);
+          this.highlightedWorkoutId.set(null);
+        }, 300);
+      } else {
+        // Gradually slow down as we approach the target
+        if (iteration > minIterations) {
+          const remainingIterations = totalIterations - iteration;
+          if (remainingIterations < 10) {
+            delay = 100 + (10 - remainingIterations) * 50; // Slow down progressively
+            if (this.intervalId) clearInterval(this.intervalId);
+            this.intervalId = setInterval(highlight, delay);
+          }
+        }
+      }
+    };
+
+    this.intervalId = setInterval(highlight, delay);
+  }
+
+  isWorkoutHighlighted(workoutId: number): boolean {
+    return this.highlightedWorkoutId() === workoutId;
+  }
+
+  isWorkoutSelected(workoutId: number): boolean {
+    const selected = this.selectedWorkout();
+    return selected !== null && selected.id === workoutId;
   }
 
   formatPace(pace: number): string {

@@ -114,19 +114,13 @@
   }
 }
 
-.spinner-section {
+.stats-section {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1.5rem;
   min-width: 300px;
-
-  h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.25rem;
-    color: #333;
-    text-align: center;
-  }
 }
 
 .workouts-list {
@@ -143,10 +137,37 @@
     gap: 0.625rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: all 0.15s ease;
+    border: 2px solid transparent;
 
     &:hover {
       background-color: #f8f9fa;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.highlighted {
+      background-color: #007bff;
+      color: white;
+      transform: scale(1.02);
+      box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+      border-color: #0056b3;
+
+      .workout-name {
+        color: white;
+        font-weight: 600;
+      }
+    }
+
+    &.selected {
+      background-color: #28a745;
+      color: white;
+      transform: scale(1.03);
+      box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+      border-color: #1e7e34;
+
+      .workout-name {
+        color: white;
+        font-weight: 700;
+      }
     }
 
     .workout-checkbox {
@@ -191,16 +212,44 @@
   }
 }
 
-.pace-display {
+.random-button {
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #28a745;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+
+  &:hover:not(:disabled) {
+    background-color: #218838;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  }
+
+  &:active:not(:disabled) {
+    background-color: #1e7e34;
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.workout-stats {
   text-align: center;
   padding: 2rem;
   background-color: #f8f9fa;
   border-radius: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  margin-top: 2rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
+  max-width: 500px;
 
   h2 {
     margin: 0 0 1.5rem 0;

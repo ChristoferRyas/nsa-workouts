@@ -13,8 +13,11 @@ export class Spinner {
   workoutSelected = output<workout>();
 
   protected isSpinning = signal(false);
-  protected rotation = signal(0);
+  protected highlightedIndex = signal<number | null>(null);
   protected selectedWorkout = signal<workout | null>(null);
+
+  private intervalId: any = null;
+  private currentIndex = 0;
 
   spin() {
     if (this.isSpinning()) return;
@@ -24,54 +27,52 @@ export class Spinner {
 
     this.isSpinning.set(true);
     this.selectedWorkout.set(null);
+    this.currentIndex = 0;
 
     // Randomly select a workout
     const selectedIndex = Math.floor(Math.random() * workoutList.length);
     const selected = workoutList[selectedIndex];
 
-    // Calculate rotation to land on selected workout
-    const segmentAngle = 360 / workoutList.length;
-    const targetAngle = selectedIndex * (-segmentAngle) - segmentAngle / 2 + 360 * 5; // Offset to center segment at top
+    // Calculate how many iterations before slowing down
+    const minIterations = 15;
+    const extraIterations = Math.floor(Math.random() * 10);
+    const totalIterations = minIterations + extraIterations + selectedIndex;
 
-    // Add multiple full rotations (5-8) plus the target angle
-    const fullRotations = 5 + Math.floor(Math.random() * 4);
-    const totalRotation = fullRotations * 360 + targetAngle;
+    let iteration = 0;
+    let delay = 50; // Start fast
 
-    this.rotation.set(totalRotation);
+    const highlight = () => {
+      this.highlightedIndex.set(this.currentIndex);
+      this.currentIndex = (this.currentIndex + 1) % workoutList.length;
+      iteration++;
 
-    // After 3 seconds, emit the selected workout
-    setTimeout(() => {
-      this.isSpinning.set(false);
-      this.selectedWorkout.set(selected);
-      this.workoutSelected.emit(selected);
-    }, 3000);
-  }
+      if (iteration >= totalIterations && this.currentIndex === selectedIndex) {
+        // We've reached the target
+        if (this.intervalId) clearInterval(this.intervalId);
 
-  getSegmentStyle(index: number) {
-    const total = this.workouts().length;
-    const angle = 360 / total;
-    const rotation = index * angle;
-
-    return {
-      transform: `rotate(${rotation}deg) skewY(${-90 + angle}deg)`,
-      backgroundColor: this.getColor(index)
+        setTimeout(() => {
+          this.isSpinning.set(false);
+          this.selectedWorkout.set(selected);
+          this.workoutSelected.emit(selected);
+          this.highlightedIndex.set(null);
+        }, 300);
+      } else {
+        // Gradually slow down as we approach the target
+        if (iteration > minIterations) {
+          const remainingIterations = totalIterations - iteration;
+          if (remainingIterations < 10) {
+            delay = 100 + (10 - remainingIterations) * 50; // Slow down progressively
+            if (this.intervalId) clearInterval(this.intervalId);
+            this.intervalId = setInterval(highlight, delay);
+          }
+        }
+      }
     };
+
+    this.intervalId = setInterval(highlight, delay);
   }
 
-  getTextStyle(index: number) {
-    const total = this.workouts().length;
-    const angle = 360 / total;
-
-    return {
-      transform: `translate(-50%, -50%) rotate(${angle / 2 - 90}deg)`
-    };
-  }
-
-  private getColor(index: number): string {
-    const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
-      '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'
-    ];
-    return colors[index % colors.length];
+  isWorkoutHighlighted(index: number): boolean {
+    return this.highlightedIndex() === index;
   }
 }

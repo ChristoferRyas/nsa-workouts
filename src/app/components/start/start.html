@@ -39,7 +39,10 @@
         <h4 class="category-title">{{ categoryGroup.category }}</h4>
         <div class="workouts-list">
           @for (workout of categoryGroup.workouts; track workout.id) {
-          <div class="workout-item">
+          <div
+            class="workout-item"
+            [class.highlighted]="isWorkoutHighlighted(workout.id)"
+            [class.selected]="isWorkoutSelected(workout.id)">
             <input
               type="checkbox"
               [id]="'workout-' + workout.id"
@@ -47,7 +50,10 @@
               (change)="toggleWorkout(workout.id, $event)"
               class="workout-checkbox"
             />
-            <label [for]="'workout-' + workout.id" class="workout-label">
+            <label
+              [for]="'workout-' + workout.id"
+              class="workout-label"
+              (click)="onWorkoutClick(workout, $event)">
               <div class="workout-name">{{ workout.name }}</div>
             </label>
           </div>
@@ -57,49 +63,50 @@
       }
     </div>
 
-    <div class="spinner-section">
-      <h3>Spin to Select</h3>
-      <app-spinner
-        [workouts]="availableWorkouts()"
-        (workoutSelected)="onWorkoutSelected($event)"
-      ></app-spinner>
-    </div>
-  </div>
+    <div class="stats-section">
+      <button
+        class="random-button"
+        (click)="randomSelect()"
+        [disabled]="isRandomizing() || availableWorkouts().length === 0">
+        {{ isRandomizing() ? 'Selecting...' : 'Random Selection' }}
+      </button>
 
-  @if (selectedWorkout()) {
-  <div class="pace-display">
-    <h2>{{ selectedWorkout()!.name }}</h2>
+      @if (selectedWorkout()) {
+        <div class="workout-stats">
+          <h2>{{ selectedWorkout()!.name }}</h2>
 
-    <div class="workout-summary">
-      @if (calculatedSets() !== null && calculatedSets()! > 0) {
-      <div class="summary-item">
-        <span class="summary-label">Sets:</span>
-        <span class="summary-value">{{ calculatedSets() }}</span>
-      </div>
-      } @if (selectedWorkout()!.duration !== undefined) {
-      <div class="summary-item">
-        <span class="summary-label">Duration:</span>
-        <span class="summary-value">{{ selectedWorkout()!.duration }}s</span>
-      </div>
-      } @else if (selectedWorkout()!.distance !== undefined) {
-      <div class="summary-item">
-        <span class="summary-label">Distance:</span>
-        <span class="summary-value">{{ selectedWorkout()!.distance }}m</span>
-      </div>
-      } @if (selectedWorkout()!.rest !== undefined) {
-      <div class="summary-item">
-        <span class="summary-label">Rest:</span>
-        <span class="summary-value">{{ selectedWorkout()!.rest }}s</span>
-      </div>
+          <div class="workout-summary">
+            @if (calculatedSets() !== null && calculatedSets()! > 0) {
+            <div class="summary-item">
+              <span class="summary-label">Sets:</span>
+              <span class="summary-value">{{ calculatedSets() }}</span>
+            </div>
+            } @if (selectedWorkout()!.duration !== undefined) {
+            <div class="summary-item">
+              <span class="summary-label">Duration:</span>
+              <span class="summary-value">{{ selectedWorkout()!.duration }}s</span>
+            </div>
+            } @else if (selectedWorkout()!.distance !== undefined) {
+            <div class="summary-item">
+              <span class="summary-label">Distance:</span>
+              <span class="summary-value">{{ selectedWorkout()!.distance }}m</span>
+            </div>
+            } @if (selectedWorkout()!.rest !== undefined) {
+            <div class="summary-item">
+              <span class="summary-label">Rest:</span>
+              <span class="summary-value">{{ selectedWorkout()!.rest }}s</span>
+            </div>
+            }
+          </div>
+
+          @if (suggestedPace()) {
+          <div class="pace-section">
+            <h3>Suggested Pace</h3>
+            <p class="pace-value">{{ formatPace(suggestedPace()!) }} min/km</p>
+          </div>
+          }
+        </div>
       }
     </div>
-
-    @if (suggestedPace()) {
-    <div class="pace-section">
-      <h3>Suggested Pace</h3>
-      <p class="pace-value">{{ formatPace(suggestedPace()!) }} min/km</p>
-    </div>
-    }
   </div>
-  }
 </div>
