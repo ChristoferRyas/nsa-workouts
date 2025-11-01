@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, computed } from '@angular/core';
+import { Component, signal, OnInit, computed, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { workouts } from '../../data/workouts';
@@ -11,10 +11,11 @@ import { calculatePace, convertDistanceToDuration } from '../../utils/pace';
   templateUrl: './start.html',
   styleUrl: './start.scss'
 })
-export class Start implements OnInit {
+export class Start implements OnInit, AfterViewChecked {
   private readonly STORAGE_KEY = 'nsa-estimated-10km-time';
   private readonly EXCLUDED_WORKOUTS_KEY = 'nsa-excluded-workouts';
   private readonly TOTAL_TIME_KEY = 'nsa-total-interval-time';
+  private readonly COLLAPSED_CATEGORIES_KEY = 'nsa-collapsed-categories';
 
   protected workouts = workouts;
   protected excludedWorkoutIds = signal<Set<number>>(new Set());
@@ -27,6 +28,7 @@ export class Start implements OnInit {
   protected calculatedSets = signal<number | null>(null);
   protected highlightedWorkoutId = signal<number | null>(null);
   protected isRandomizing = signal(false);
+  protected collapsedCategories = signal<Set<string>>(new Set());
 
   private intervalId: any = null;
   private currentIndex = 0;
@@ -52,12 +54,25 @@ export class Start implements OnInit {
       categories.set(category, categoryWorkouts);
     });
 
-    // Filter out empty categories, sort workouts by name, and convert to array
+    // Filter out empty categories, sort workouts by duration/distance, and convert to array
     return Array.from(categories.entries())
       .filter(([_, workouts]) => workouts.length > 0)
       .map(([category, workouts]) => ({
         category,
-        workouts: workouts.sort((a, b) => a.name.localeCompare(b.name))
+        workouts: workouts.sort((a, b) => {
+          // Sort by duration if both have duration
+          if (a.duration !== undefined && b.duration !== undefined) {
+            return a.duration - b.duration;
+          }
+          // Sort by distance if both have distance
+          if (a.distance !== undefined && b.distance !== undefined) {
+            return a.distance - b.distance;
+          }
+          // If one has duration and other has distance, put duration first
+          if (a.duration !== undefined) return -1;
+          if (b.duration !== undefined) return 1;
+          return 0;
+        })
       }));
   });
 
@@ -71,6 +86,17 @@ export class Start implements OnInit {
     this.loadEstimatedTime();
     this.loadExcludedWorkouts();
     this.loadTotalIntervalTime();
+    this.loadCollapsedCategories();
+  }
+
+  ngAfterViewChecked() {
+    // Update indeterminate state for category checkboxes
+    this.workoutsByCategory().forEach(categoryGroup => {
+      const checkbox = document.getElementById(`category-${categoryGroup.category}`) as HTMLInputElement;
+      if (checkbox) {
+        checkbox.indeterminate = this.isCategoryIndeterminate(categoryGroup.workouts);
+      }
+    });
   }
 
   private loadEstimatedTime() {
@@ -112,6 +138,23 @@ export class Start implements OnInit {
     localStorage.setItem(this.EXCLUDED_WORKOUTS_KEY, JSON.stringify(excluded));
   }
 
+  private loadCollapsedCategories() {
+    const saved = localStorage.getItem(this.COLLAPSED_CATEGORIES_KEY);
+    if (saved) {
+      try {
+        const collapsed = JSON.parse(saved) as string[];
+        this.collapsedCategories.set(new Set(collapsed));
+      } catch (e) {
+        console.error('Failed to load collapsed categories:', e);
+      }
+    }
+  }
+
+  private saveCollapsedCategories() {
+    const collapsed = Array.from(this.collapsedCategories());
+    localStorage.setItem(this.COLLAPSED_CATEGORIES_KEY, JSON.stringify(collapsed));
+  }
+
   onTimeChange(value: number | null) {
     this.estimatedTime.set(value);
     if (value !== null && value > 0) {
@@ -144,6 +187,47 @@ export class Start implements OnInit {
 
     this.excludedWorkoutIds.set(excluded);
     this.saveExcludedWorkouts();
+  }
+
+  isCategoryChecked(categoryWorkouts: workout[]): boolean {
+    return categoryWorkouts.every(w => this.isWorkoutIncluded(w.id));
+  }
+
+  isCategoryIndeterminate(categoryWorkouts: workout[]): boolean {
+    const includedCount = categoryWorkouts.filter(w => this.isWorkoutIncluded(w.id)).length;
+    return includedCount > 0 && includedCount < categoryWorkouts.length;
+  }
+
+  toggleCategory(categoryWorkouts: workout[], event: Event) {
+    const checkbox = event.target as HTMLInputElement;
+    const excluded = new Set(this.excludedWorkoutIds());
+
+    categoryWorkouts.forEach(workout => {
+      if (checkbox.checked) {
+        excluded.delete(workout.id);
+      } else {
+        excluded.add(workout.id);
+      }
+    });
+
+    this.excludedWorkoutIds.set(excluded);
+    this.saveExcludedWorkouts();
+  }
+
+  isCategoryCollapsed(category: string): boolean {
+    return this.collapsedCategories().has(category);
+  }
+
+  toggleCategoryCollapse(category: string, event: Event) {
+    event.stopPropagation();
+    const collapsed = new Set(this.collapsedCategories());
+    if (collapsed.has(category)) {
+      collapsed.delete(category);
+    } else {
+      collapsed.add(category);
+    }
+    this.collapsedCategories.set(collapsed);
+    this.saveCollapsedCategories();
   }
 
   selectWorkout(workout: workout) {
@@ -217,9 +301,9 @@ export class Start implements OnInit {
     const selectedIndex = Math.floor(Math.random() * available.length);
     const selected = available[selectedIndex];
 
-    // Calculate how many iterations before slowing down
-    const minIterations = 15;
-    const extraIterations = Math.floor(Math.random() * 10);
+    // Calculate how many iterations before slowing down (reduced by ~half)
+    const minIterations = 8;
+    const extraIterations = Math.floor(Math.random() * 5);
     const totalIterations = minIterations + extraIterations + selectedIndex;
 
     let iteration = 0;
@@ -239,13 +323,13 @@ export class Start implements OnInit {
           this.isRandomizing.set(false);
           this.selectWorkout(selected);
           this.highlightedWorkoutId.set(null);
-        }, 300);
+        }, 200);
       } else {
         // Gradually slow down as we approach the target
         if (iteration > minIterations) {
           const remainingIterations = totalIterations - iteration;
-          if (remainingIterations < 10) {
-            delay = 100 + (10 - remainingIterations) * 50; // Slow down progressively
+          if (remainingIterations < 5) {
+            delay = 80 + (5 - remainingIterations) * 40; // Slow down progressively
             if (this.intervalId) clearInterval(this.intervalId);
             this.intervalId = setInterval(highlight, delay);
           }
@@ -285,6 +369,39 @@ export class Start implements OnInit {
       return `${durationInSeconds}s`;
     }
     return '';
+  }
+
+  isTrackWorkout(): boolean {
+    const workout = this.selectedWorkout();
+    return workout !== null && workout.category === WorkoutCategory.TRACK_WORKOUTS;
+  }
+
+  getSecondsPerLap(): string | null {
+    const pace = this.suggestedPace();
+    if (pace === null) {
+      return null;
+    }
+    // A standard track lap is 400m = 0.4km
+    // Pace is in minutes per km, so seconds per 400m = pace * 0.4 * 60
+    const secondsPerLap = pace * 0.4 * 60;
+    const seconds = Math.floor(secondsPerLap);
+    const decimals = Math.round((secondsPerLap - seconds) * 10);
+
+    if (decimals === 0) {
+      return `${seconds}s`;
+    }
+    return `${seconds}.${decimals}s`;
+  }
+
+  getSpeedKmh(): string | null {
+    const pace = this.suggestedPace();
+    if (pace === null) {
+      return null;
+    }
+    // Convert pace (min/km) to speed (km/h)
+    // Speed = 60 / pace
+    const speedKmh = 60 / pace;
+    return speedKmh.toFixed(1);
   }
 
   getPaceForWorkout(workout: workout): string | null {

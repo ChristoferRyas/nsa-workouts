@@ -3,7 +3,7 @@ import { workout, WorkoutCategory } from "../interfaces/workout";
 export const workouts: workout[] = [
     {
         id: 1,
-        name: "10min",
+        name: "10min intervals",
         duration: 600,
         rest: 120,
         paceFactor: 1,
@@ -12,7 +12,7 @@ export const workouts: workout[] = [
     },
     {
         id: 2,
-        name: "6min",
+        name: "6min intervals",
         duration: 360,
         category: WorkoutCategory.TIME_BASED,
         rest: 90,
@@ -21,7 +21,7 @@ export const workouts: workout[] = [
     },
     {
         id: 3,
-        name: "3min",
+        name: "3min intervals",
         duration: 180,
         rest: 60,
         paceFactor: 0.9,
@@ -30,7 +30,7 @@ export const workouts: workout[] = [
     },
     {
         id: 4,
-        name: "90/30",
+        name: "90/30 intervals",
         duration: 90,
         rest: 30,
         paceFactor: 1,
@@ -39,7 +39,7 @@ export const workouts: workout[] = [
     },
     {
         id: 5,
-        name: "400m",
+        name: "400m intervals",
         distance: 400,
         rest: 30,
         paceFactor: 1,
@@ -48,7 +48,7 @@ export const workouts: workout[] = [
     },
     {
         id: 6,
-        name: "45/15",
+        name: "45/15 intervals",
         duration: 45,
         rest: 15,
         paceFactor: 1,
@@ -57,7 +57,7 @@ export const workouts: workout[] = [
     },
     {
         id: 7,
-        name: "800m",
+        name: "800m intervals",
         distance: 800,
         rest: 60,
         paceFactor: 1,
@@ -93,7 +93,7 @@ export const workouts: workout[] = [
     },
     {
         id: 11,
-        name: "12min",
+        name: "12min intervals",
         duration: 720,
         rest: 120,
         paceFactor: 1,
@@ -102,11 +102,65 @@ export const workouts: workout[] = [
     },
     {
         id: 12,
-        name: "5min",
+        name: "5min intervals",
         duration: 300,
         rest: 80,
         paceFactor: 1,
         sets: 5,
         category: WorkoutCategory.TIME_BASED
+    },
+    {
+        id: 13,
+        name: "8min intervals",
+        duration: 480,
+        rest: 100,
+        paceFactor: 1,
+        sets: 4,
+        category: WorkoutCategory.TIME_BASED
+    },
+    {
+        id: 14,
+        name: "1 mile repeats",
+        distance: 1609,
+        rest: 90,
+        paceFactor: 1,
+        sets: 6,
+        category: WorkoutCategory.DISTANCE_BASED
+    },
+    { 
+        id: 15,
+        name: "15min intervals",
+        duration: 900,
+        rest: 120,
+        paceFactor: 1,
+        sets: 4,
+        category: WorkoutCategory.TIME_BASED
+    },
+    {
+        id: 16,
+        name: "1200m intervals",
+        distance: 1200,
+        rest: 75,
+        paceFactor: 1,
+        sets: 5,
+        category: WorkoutCategory.TRACK_WORKOUTS
+    },
+    {
+        id: 17,
+        name: "1600m intervals",
+        distance: 1600,
+        rest: 90,
+        paceFactor: 1,
+        sets: 4,
+        category: WorkoutCategory.TRACK_WORKOUTS
+    },
+    {
+        id: 18,
+        name: "2000m intervals",
+        distance: 2000,
+        rest: 120,
+        paceFactor: 1,
+        sets: 3,
+        category: WorkoutCategory.TRACK_WORKOUTS
     }
 ];

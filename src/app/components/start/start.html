@@ -44,8 +44,24 @@
       @for (categoryGroup of workoutsByCategory(); track categoryGroup.category) {
       <div class="category-group">
         @if (!isRandomizing()) {
-        <h4 class="category-title">{{ categoryGroup.category }}</h4>
+        <h4 class="category-title">
+          <button
+            class="collapse-toggle"
+            (click)="toggleCategoryCollapse(categoryGroup.category, $event)"
+            [attr.aria-expanded]="!isCategoryCollapsed(categoryGroup.category)">
+            <span [class.collapsed]="isCategoryCollapsed(categoryGroup.category)">▼</span>
+          </button>
+          <input
+            type="checkbox"
+            [id]="'category-' + categoryGroup.category"
+            [checked]="isCategoryChecked(categoryGroup.workouts)"
+            (change)="toggleCategory(categoryGroup.workouts, $event)"
+            class="category-checkbox"
+          />
+          <label [for]="'category-' + categoryGroup.category">{{ categoryGroup.category }}</label>
+        </h4>
         }
+        @if (!isCategoryCollapsed(categoryGroup.category) || isRandomizing()) {
         <div class="workouts-list">
           @for (workout of categoryGroup.workouts; track workout.id) {
           @if (!isRandomizing() || isWorkoutIncluded(workout.id)) {
@@ -72,6 +88,7 @@
           }
           }
         </div>
+        }
       </div>
       }
     </div>
@@ -109,6 +126,11 @@
         <div class="pace-section">
           <h3>Suggested Pace</h3>
           <p class="pace-value">{{ formatPace(suggestedPace()!) }} min/km</p>
+          @if (isTrackWorkout() && getSecondsPerLap()) {
+          <p class="lap-time">{{ getSecondsPerLap() }} per lap (400m)</p>
+          } @else if (getSpeedKmh()) {
+          <p class="lap-time">{{ getSpeedKmh() }} km/h</p>
+          }
         </div>
         }
       </div>
