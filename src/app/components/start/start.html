@@ -34,11 +34,21 @@
   <div class="content-layout">
     <div class="workouts-section">
       <h3>Select Workouts</h3>
+      <button
+        class="random-button"
+        (click)="randomSelect()"
+        [disabled]="isRandomizing() || availableWorkouts().length === 0"
+      >
+        {{ isRandomizing() ? 'Selecting...' : 'Random' }}
+      </button>
       @for (categoryGroup of workoutsByCategory(); track categoryGroup.category) {
       <div class="category-group">
+        @if (!isRandomizing()) {
         <h4 class="category-title">{{ categoryGroup.category }}</h4>
+        }
         <div class="workouts-list">
           @for (workout of categoryGroup.workouts; track workout.id) {
+          @if (!isRandomizing() || isWorkoutIncluded(workout.id)) {
           <div
             class="workout-item"
             [class.highlighted]="isWorkoutHighlighted(workout.id)"
@@ -60,20 +70,13 @@
             </label>
           </div>
           }
+          }
         </div>
       </div>
       }
     </div>
 
     <div class="stats-section">
-      <button
-        class="random-button"
-        (click)="randomSelect()"
-        [disabled]="isRandomizing() || availableWorkouts().length === 0"
-      >
-        {{ isRandomizing() ? 'Selecting...' : 'Random' }}
-      </button>
-
       @if (selectedWorkout()) {
       <div class="workout-stats">
         <h2>{{ selectedWorkout()!.name }}</h2>
@@ -87,7 +90,7 @@
           } @if (selectedWorkout()!.duration !== undefined) {
           <div class="summary-item">
             <span class="summary-label">Duration:</span>
-            <span class="summary-value">{{ selectedWorkout()!.duration }}s</span>
+            <span class="summary-value">{{ formatDuration(selectedWorkout()!.duration) }}</span>
           </div>
           } @else if (selectedWorkout()!.distance !== undefined) {
           <div class="summary-item">

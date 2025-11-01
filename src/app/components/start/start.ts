@@ -149,6 +149,16 @@ export class Start implements OnInit {
   selectWorkout(workout: workout) {
     this.selectedWorkout.set(workout);
 
+    // Scroll to stats section on mobile devices
+    setTimeout(() => {
+      if (window.innerWidth <= 968) {
+        const statsSection = document.querySelector('.stats-section');
+        if (statsSection) {
+          statsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }, 100);
+
     const time = this.estimatedTime();
     const totalTime = this.totalIntervalTime();
 
@@ -259,6 +269,22 @@ export class Start implements OnInit {
     const minutes = Math.floor(pace);
     const seconds = Math.round((pace - minutes) * 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  formatDuration(durationInSeconds: number | undefined): string {
+    console.log(durationInSeconds)
+    if (durationInSeconds !== undefined) {
+      if (durationInSeconds >= 60) {
+        const minutes = Math.floor(durationInSeconds / 60);
+        const seconds = durationInSeconds % 60;
+        if (seconds === 0) {
+          return `${minutes}min`;
+        }
+        return `${minutes}:${seconds.toString().padStart(2, '0')}min`;
+      }
+      return `${durationInSeconds}s`;
+    }
+    return '';
   }
 
   getPaceForWorkout(workout: workout): string | null {
