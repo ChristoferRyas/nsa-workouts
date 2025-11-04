@@ -1,34 +1,48 @@
 <div class="start-container">
   <h1 class="start-title">Norwegian singles workout generator</h1>
 
-  <div class="input-row">
-    <div class="input-group">
-      <label for="estimatedTime">Estimated 10km time (minutes):</label>
-      <input
-        id="estimatedTime"
-        type="number"
-        [ngModel]="estimatedTime()"
-        (ngModelChange)="onTimeChange($event)"
-        placeholder="Enter time in minutes"
-        min="1"
-        class="time-input"
-      />
+  <div class="input-section-wrapper">
+    <div class="input-section-header" (click)="toggleInputSection()">
+      <h2 class="input-section-title">
+        <span class="collapse-icon" [class.collapsed]="isInputSectionCollapsed()">▼</span>
+        Workout Settings @if (isInputSectionCollapsed() && estimatedTime() !== null &&
+        totalIntervalTime() !== null) {
+        <span class="settings-preview">
+          (10km: {{ estimatedTime() }}min | Total: {{ totalIntervalTime() }}min)
+        </span>
+        }
+      </h2>
     </div>
 
-    <div class="input-group">
-      <label for="totalTime"
-        >Total workout time in minutes<br />(excluding warmup & cooldown) :</label
-      >
-      <input
-        id="totalTime"
-        type="number"
-        [ngModel]="totalIntervalTime()"
-        (ngModelChange)="onTotalTimeChange($event)"
-        placeholder="Enter total time"
-        min="1"
-        class="time-input"
-      />
+    @if (!isInputSectionCollapsed()) {
+    <div class="input-row">
+      <div class="input-group">
+        <label for="estimatedTime">Estimated 10km time:</label>
+        <input
+          id="estimatedTime"
+          type="number"
+          [ngModel]="estimatedTime()"
+          (ngModelChange)="onTimeChange($event)"
+          placeholder="Enter time in minutes"
+          min="1"
+          class="time-input"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="totalTime">Total interval time:</label>
+        <input
+          id="totalTime"
+          type="number"
+          [ngModel]="totalIntervalTime()"
+          (ngModelChange)="onTotalTimeChange($event)"
+          placeholder="Enter total time"
+          min="1"
+          class="time-input"
+        />
+      </div>
     </div>
+    }
   </div>
 
   <div class="content-layout">
@@ -48,7 +62,8 @@
           <button
             class="collapse-toggle"
             (click)="toggleCategoryCollapse(categoryGroup.category, $event)"
-            [attr.aria-expanded]="!isCategoryCollapsed(categoryGroup.category)">
+            [attr.aria-expanded]="!isCategoryCollapsed(categoryGroup.category)"
+          >
             <span [class.collapsed]="isCategoryCollapsed(categoryGroup.category)">▼</span>
           </button>
           <input
@@ -60,11 +75,10 @@
           />
           <label [for]="'category-' + categoryGroup.category">{{ categoryGroup.category }}</label>
         </h4>
-        }
-        @if (!isCategoryCollapsed(categoryGroup.category) || isRandomizing()) {
+        } @if (!isCategoryCollapsed(categoryGroup.category) || isRandomizing()) {
         <div class="workouts-list">
-          @for (workout of categoryGroup.workouts; track workout.id) {
-          @if (!isRandomizing() || isWorkoutIncluded(workout.id)) {
+          @for (workout of categoryGroup.workouts; track workout.id) { @if (!isRandomizing() ||
+          isWorkoutIncluded(workout.id)) {
           <div
             class="workout-item"
             [class.highlighted]="isWorkoutHighlighted(workout.id)"
@@ -85,8 +99,7 @@
               <div class="workout-name">{{ workout.name }}</div>
             </label>
           </div>
-          }
-          }
+          } }
         </div>
         }
       </div>

@@ -29,6 +29,7 @@ export class Start implements OnInit, AfterViewChecked {
   protected highlightedWorkoutId = signal<number | null>(null);
   protected isRandomizing = signal(false);
   protected collapsedCategories = signal<Set<string>>(new Set());
+  protected isInputSectionCollapsed = signal(false);
 
   private intervalId: any = null;
   private currentIndex = 0;
@@ -87,6 +88,15 @@ export class Start implements OnInit, AfterViewChecked {
     this.loadExcludedWorkouts();
     this.loadTotalIntervalTime();
     this.loadCollapsedCategories();
+
+    // Collapse input section if user has already entered values
+    if (this.estimatedTime() !== null && this.totalIntervalTime() !== null) {
+      this.isInputSectionCollapsed.set(true);
+    }
+  }
+
+  toggleInputSection() {
+    this.isInputSectionCollapsed.set(!this.isInputSectionCollapsed());
   }
 
   ngAfterViewChecked() {
@@ -246,7 +256,7 @@ export class Start implements OnInit, AfterViewChecked {
     const time = this.estimatedTime();
     const totalTime = this.totalIntervalTime();
 
-    // Calculate number of sets based on total interval time
+    // Calculate number of sets based on total interval time (excluding rest)
     if (totalTime !== null && totalTime > 0) {
       let duration = workout.duration;
       if (duration === undefined && workout.distance !== undefined && time !== null && time > 0) {
@@ -255,9 +265,9 @@ export class Start implements OnInit, AfterViewChecked {
 
       if (duration !== undefined) {
         const totalTimeSeconds = totalTime * 60; // convert minutes to seconds
-        const intervalWithRest = duration + workout.rest; // duration + rest time
-        const sets = Math.floor(totalTimeSeconds / intervalWithRest);
-        this.calculatedSets.set(sets);
+        // Calculate sets based only on interval time, then round to nearest
+        const sets = Math.round(totalTimeSeconds / duration);
+        this.calculatedSets.set(sets > 0 ? sets : 1);
       } else {
         this.calculatedSets.set(null);
       }
