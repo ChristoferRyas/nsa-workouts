@@ -54,20 +54,20 @@
   backdrop-filter: blur(5px);
 
   &.highlighted {
-    background-color: #007bff;
+    background: linear-gradient(135deg, #BA0C2F, #00205B);
     color: white;
     transform: scale(1.05);
-    box-shadow: 0 6px 12px rgba(0, 123, 255, 0.3);
-    border-color: #0056b3;
+    box-shadow: 0 6px 12px rgba(186, 12, 47, 0.3);
+    border-color: #a00a28;
     font-weight: 600;
   }
 
   &.selected {
-    background-color: #28a745;
+    background: linear-gradient(135deg, #00205B, #BA0C2F);
     color: white;
     transform: scale(1.08);
-    box-shadow: 0 8px 16px rgba(40, 167, 69, 0.4);
-    border-color: #1e7e34;
+    box-shadow: 0 8px 16px rgba(0, 32, 91, 0.4);
+    border-color: #001a4d;
     font-weight: 700;
     animation: pulse 0.5s ease;
   }
@@ -88,18 +88,18 @@
   font-weight: 600;
   border: none;
   border-radius: 0.5rem;
-  background-color: #28a745;
+  background: linear-gradient(135deg, #BA0C2F, #00205B);
   color: white;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    background-color: #218838;
+    background: linear-gradient(135deg, #a00a28, #001a4d);
     transform: scale(1.05);
   }
 
   &:active:not(:disabled) {
-    background-color: #1e7e34;
+    background: linear-gradient(135deg, #8a0823, #00153d);
     transform: scale(0.98);
   }
 
