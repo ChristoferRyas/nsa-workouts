@@ -11,6 +11,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  position: relative;
+  background-image: url('app/assets/stadium.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
 html, body {
