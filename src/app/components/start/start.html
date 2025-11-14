@@ -42,6 +42,45 @@
         />
       </div>
     </div>
+
+    <div class="custom-workout-section">
+      <h3 class="custom-workout-title">Add Custom Distance Workout</h3>
+      <div class="custom-workout-form">
+        <div class="custom-input-group">
+          <label for="customDistance">Distance (meters):</label>
+          <input
+            id="customDistance"
+            type="number"
+            [ngModel]="customDistance()"
+            (ngModelChange)="onCustomDistanceChange($event)"
+            placeholder="e.g., 600"
+            min="1"
+            class="custom-input"
+          />
+        </div>
+
+        <div class="custom-input-group">
+          <label for="customRest">Rest (seconds):</label>
+          <input
+            id="customRest"
+            type="number"
+            [ngModel]="customRest()"
+            (ngModelChange)="onCustomRestChange($event)"
+            placeholder="e.g., 60"
+            min="0"
+            class="custom-input"
+          />
+        </div>
+
+        <button
+          class="add-custom-button"
+          (click)="addCustomWorkout()"
+          [disabled]="!isCustomWorkoutValid()"
+        >
+          Add Custom Workout
+        </button>
+      </div>
+    </div>
     }
   </div>
 

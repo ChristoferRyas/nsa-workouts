@@ -164,6 +164,192 @@
   }
 }
 
+.custom-workout-section {
+  padding: 2rem;
+  border-top: 2px solid rgba(186, 12, 47, 0.2);
+  background: linear-gradient(135deg, rgba(186, 12, 47, 0.03) 0%, rgba(0, 32, 91, 0.03) 100%);
+  animation: slideDown 0.3s ease-out;
+
+  .custom-workout-title {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    background: linear-gradient(135deg, #BA0C2F, #00205B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .custom-workout-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .custom-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 140px;
+
+      label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2d3748;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .custom-input {
+        padding: 0.75rem 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: 2px solid rgba(186, 12, 47, 0.3);
+        border-radius: 0.75rem;
+        background: white;
+        transition: all 0.3s ease;
+        color: #BA0C2F;
+        text-align: center;
+
+        &:focus {
+          outline: none;
+          border-color: #BA0C2F;
+          box-shadow: 0 4px 12px rgba(186, 12, 47, 0.25);
+          transform: translateY(-2px);
+        }
+
+        &::placeholder {
+          color: #cbd5e0;
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+
+        &:hover {
+          border-color: rgba(186, 12, 47, 0.5);
+        }
+      }
+    }
+
+    .add-custom-button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 0.75rem;
+      background: linear-gradient(135deg, #BA0C2F, #00205B);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(186, 12, 47, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      align-self: flex-end;
+
+      @media (max-width: 768px) {
+        align-self: stretch;
+      }
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(186, 12, 47, 0.4);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        background: linear-gradient(135deg, #cbd5e0, #a0aec0);
+        cursor: not-allowed;
+        opacity: 0.6;
+        box-shadow: none;
+      }
+    }
+  }
+
+  .custom-workouts-list {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(186, 12, 47, 0.2);
+
+    h4 {
+      margin: 0 0 1rem 0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #2d3748;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .custom-workout-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      .custom-workout-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        border: 2px solid rgba(186, 12, 47, 0.2);
+        transition: all 0.3s ease;
+
+        &:hover {
+          border-color: rgba(186, 12, 47, 0.4);
+          box-shadow: 0 2px 8px rgba(186, 12, 47, 0.15);
+          transform: translateX(4px);
+        }
+
+        .custom-workout-name {
+          font-weight: 600;
+          color: #2d3748;
+          flex: 1;
+        }
+
+        .delete-custom-button {
+          background: linear-gradient(135deg, #BA0C2F, #00205B);
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-size: 1rem;
+          font-weight: bold;
+          line-height: 1;
+          padding: 0;
+
+          &:hover {
+            transform: scale(1.15) rotate(90deg);
+            box-shadow: 0 2px 8px rgba(186, 12, 47, 0.4);
+          }
+
+          &:active {
+            transform: scale(1) rotate(90deg);
+          }
+        }
+      }
+    }
+  }
+}
+
 .content-layout {
   display: flex;
   gap: 3rem;

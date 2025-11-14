@@ -13,5 +13,6 @@ export enum WorkoutCategory {
     TIME_BASED = "Time-Based",
     DISTANCE_BASED = "Distance-Based",
     TRACK_WORKOUTS = "Track Workouts",
-    THREADMILL_WORKOUTS = "Treadmill Workouts"
+    THREADMILL_WORKOUTS = "Treadmill Workouts",
+    CUSTOM = "Custom Workouts"
 }

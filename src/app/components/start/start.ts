@@ -16,8 +16,10 @@ export class Start implements OnInit, AfterViewChecked {
   private readonly EXCLUDED_WORKOUTS_KEY = 'nsa-excluded-workouts';
   private readonly TOTAL_TIME_KEY = 'nsa-total-interval-time';
   private readonly COLLAPSED_CATEGORIES_KEY = 'nsa-collapsed-categories';
+  private readonly CUSTOM_WORKOUTS_KEY = 'nsa-custom-workouts';
 
-  protected workouts = workouts;
+  protected baseWorkouts = workouts;
+  protected customWorkouts = signal<workout[]>([]);
   protected excludedWorkoutIds = signal<Set<number>>(new Set());
   protected estimatedTime = signal<number | null>(null);
   protected previousTime = signal<number | null>(null);
@@ -31,12 +33,22 @@ export class Start implements OnInit, AfterViewChecked {
   protected collapsedCategories = signal<Set<string>>(new Set());
   protected isInputSectionCollapsed = signal(false);
 
+  // Custom workout form inputs
+  protected customDistance = signal<number | null>(null);
+  protected customRest = signal<number | null>(null);
+
   private intervalId: any = null;
   private currentIndex = 0;
+  private nextCustomWorkoutId = 1000; // Start custom IDs at 1000 to avoid conflicts
+
+  // Reactive workouts list that combines base and custom workouts
+  protected workouts = computed(() => {
+    return [...this.baseWorkouts, ...this.customWorkouts()];
+  });
 
   protected availableWorkouts = computed(() => {
     const excluded = this.excludedWorkoutIds();
-    return this.workouts.filter(w => !excluded.has(w.id));
+    return this.workouts().filter(w => !excluded.has(w.id));
   });
 
   protected workoutsByCategory = computed(() => {
@@ -48,7 +60,7 @@ export class Start implements OnInit, AfterViewChecked {
     });
 
     // Group workouts by category
-    this.workouts.forEach(workout => {
+    this.workouts().forEach(workout => {
       const category = workout.category || WorkoutCategory.TIME_BASED;
       const categoryWorkouts = categories.get(category) || [];
       categoryWorkouts.push(workout);
@@ -78,6 +90,7 @@ export class Start implements OnInit, AfterViewChecked {
   });
 
   protected categoryOrder = [
+    WorkoutCategory.CUSTOM,
     WorkoutCategory.TIME_BASED,
     WorkoutCategory.DISTANCE_BASED,
     WorkoutCategory.TRACK_WORKOUTS
@@ -88,6 +101,7 @@ export class Start implements OnInit, AfterViewChecked {
     this.loadExcludedWorkouts();
     this.loadTotalIntervalTime();
     this.loadCollapsedCategories();
+    this.loadCustomWorkouts();
 
     // Collapse input section if user has already entered values
     if (this.estimatedTime() !== null && this.totalIntervalTime() !== null) {
@@ -163,6 +177,91 @@ export class Start implements OnInit, AfterViewChecked {
   private saveCollapsedCategories() {
     const collapsed = Array.from(this.collapsedCategories());
     localStorage.setItem(this.COLLAPSED_CATEGORIES_KEY, JSON.stringify(collapsed));
+  }
+
+  private loadCustomWorkouts() {
+    const saved = localStorage.getItem(this.CUSTOM_WORKOUTS_KEY);
+    if (saved) {
+      try {
+        const custom = JSON.parse(saved) as workout[];
+        this.customWorkouts.set(custom);
+        // Update the next ID to be higher than any existing custom workout
+        const maxId = custom.reduce((max, w) => Math.max(max, w.id), 999);
+        this.nextCustomWorkoutId = maxId + 1;
+      } catch (e) {
+        console.error('Failed to load custom workouts:', e);
+      }
+    }
+  }
+
+  private saveCustomWorkouts() {
+    const custom = this.customWorkouts();
+    localStorage.setItem(this.CUSTOM_WORKOUTS_KEY, JSON.stringify(custom));
+  }
+
+  onCustomDistanceChange(value: number | null) {
+    this.customDistance.set(value);
+  }
+
+  onCustomRestChange(value: number | null) {
+    this.customRest.set(value);
+  }
+
+  isCustomWorkoutValid(): boolean {
+    const distance = this.customDistance();
+    const rest = this.customRest();
+
+    return distance !== null && distance > 0 &&
+           rest !== null && rest >= 0;
+  }
+
+  addCustomWorkout() {
+    if (!this.isCustomWorkoutValid()) {
+      return;
+    }
+
+    const distance = this.customDistance()!;
+    const rest = this.customRest()!;
+
+    const newWorkout: workout = {
+      id: this.nextCustomWorkoutId++,
+      name: `${distance}m intervals`,
+      distance: distance,
+      rest: rest,
+      paceFactor: 1,
+      sets: 1, // Default to 1, will be calculated based on total time
+      category: WorkoutCategory.CUSTOM
+    };
+
+    const updated = [...this.customWorkouts(), newWorkout];
+    this.customWorkouts.set(updated);
+    this.saveCustomWorkouts();
+
+    // Clear the form
+    this.customDistance.set(null);
+    this.customRest.set(null);
+  }
+
+  deleteCustomWorkout(id: number) {
+    const updated = this.customWorkouts().filter(w => w.id !== id);
+    this.customWorkouts.set(updated);
+    this.saveCustomWorkouts();
+
+    // If the deleted workout was selected, clear the selection
+    const selected = this.selectedWorkout();
+    if (selected && selected.id === id) {
+      this.selectedWorkout.set(null);
+      this.suggestedPace.set(null);
+      this.calculatedSets.set(null);
+    }
+
+    // Remove from excluded workouts if it was excluded
+    const excluded = new Set(this.excludedWorkoutIds());
+    if (excluded.has(id)) {
+      excluded.delete(id);
+      this.excludedWorkoutIds.set(excluded);
+      this.saveExcludedWorkouts();
+    }
   }
 
   onTimeChange(value: number | null) {
