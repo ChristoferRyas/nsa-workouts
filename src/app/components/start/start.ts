@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { workouts } from '../../data/workouts';
 import { workout, WorkoutCategory } from '../../interfaces/workout';
-import { calculatePace, convertDistanceToDuration } from '../../utils/pace';
+import { calculatePace, calculateElevationAdjustment, calculateWindAdjustment, calculateTemperatureFactor, convertDistanceToDuration } from '../../utils/pace';
 
 @Component({
   selector: 'app-start',
@@ -17,11 +17,17 @@ export class Start implements OnInit, AfterViewChecked {
   private readonly TOTAL_TIME_KEY = 'nsa-total-interval-time';
   private readonly COLLAPSED_CATEGORIES_KEY = 'nsa-collapsed-categories';
   private readonly CUSTOM_WORKOUTS_KEY = 'nsa-custom-workouts';
+  private readonly ELEVATION_KEY = 'nsa-elevation-gain';
+  private readonly WIND_SPEED_KEY = 'nsa-wind-speed';
+  private readonly WIND_TYPE_KEY = 'nsa-wind-type';
+  private readonly TEMPERATURE_KEY = 'nsa-temperature';
 
   protected baseWorkouts = workouts;
   protected customWorkouts = signal<workout[]>([]);
   protected excludedWorkoutIds = signal<Set<number>>(new Set());
   protected estimatedTime = signal<number | null>(null);
+  protected estimatedTimeMinutes = signal<number | null>(null);
+  protected estimatedTimeSeconds = signal<number>(0);
   protected previousTime = signal<number | null>(null);
   protected totalIntervalTime = signal<number | null>(null);
   protected previousTotalTime = signal<number | null>(null);
@@ -32,6 +38,11 @@ export class Start implements OnInit, AfterViewChecked {
   protected isRandomizing = signal(false);
   protected collapsedCategories = signal<Set<string>>(new Set());
   protected isInputSectionCollapsed = signal(false);
+
+  protected elevationGain = signal<number | null>(null);
+  protected windSpeed = signal<number | null>(null);
+  protected windType = signal<'headwind' | 'crosswind'>('headwind');
+  protected temperature = signal<number | null>(null);
 
   // Custom workout form inputs
   protected customDistance = signal<number | null>(null);
@@ -102,6 +113,9 @@ export class Start implements OnInit, AfterViewChecked {
     this.loadTotalIntervalTime();
     this.loadCollapsedCategories();
     this.loadCustomWorkouts();
+    this.loadElevationGain();
+    this.loadWind();
+    this.loadTemperature();
 
     // Collapse input section if user has already entered values
     if (this.estimatedTime() !== null && this.totalIntervalTime() !== null) {
@@ -130,6 +144,8 @@ export class Start implements OnInit, AfterViewChecked {
       if (!isNaN(time) && time > 0) {
         this.estimatedTime.set(time);
         this.previousTime.set(time);
+        this.estimatedTimeMinutes.set(Math.floor(time));
+        this.estimatedTimeSeconds.set(Math.round((time - Math.floor(time)) * 60));
       }
     }
   }
@@ -177,6 +193,83 @@ export class Start implements OnInit, AfterViewChecked {
   private saveCollapsedCategories() {
     const collapsed = Array.from(this.collapsedCategories());
     localStorage.setItem(this.COLLAPSED_CATEGORIES_KEY, JSON.stringify(collapsed));
+  }
+
+  private loadElevationGain() {
+    const saved = localStorage.getItem(this.ELEVATION_KEY);
+    if (saved) {
+      const value = parseFloat(saved);
+      if (!isNaN(value) && value >= 0) {
+        this.elevationGain.set(value);
+      }
+    }
+  }
+
+  onElevationChange(value: number | null) {
+    this.elevationGain.set(value);
+    if (value !== null && value >= 0) {
+      localStorage.setItem(this.ELEVATION_KEY, value.toString());
+    } else {
+      localStorage.removeItem(this.ELEVATION_KEY);
+    }
+    this.recalculatePace();
+  }
+
+  private loadWind() {
+    const savedSpeed = localStorage.getItem(this.WIND_SPEED_KEY);
+    if (savedSpeed) {
+      const value = parseFloat(savedSpeed);
+      if (!isNaN(value) && value >= 0) {
+        this.windSpeed.set(value);
+      }
+    }
+    const savedType = localStorage.getItem(this.WIND_TYPE_KEY);
+    if (savedType === 'headwind' || savedType === 'crosswind') {
+      this.windType.set(savedType);
+    }
+  }
+
+  onWindSpeedChange(value: number | null) {
+    this.windSpeed.set(value);
+    if (value !== null && value >= 0) {
+      localStorage.setItem(this.WIND_SPEED_KEY, value.toString());
+    } else {
+      localStorage.removeItem(this.WIND_SPEED_KEY);
+    }
+    this.recalculatePace();
+  }
+
+  onWindTypeChange(type: 'headwind' | 'crosswind') {
+    this.windType.set(type);
+    localStorage.setItem(this.WIND_TYPE_KEY, type);
+    this.recalculatePace();
+  }
+
+  private loadTemperature() {
+    const saved = localStorage.getItem(this.TEMPERATURE_KEY);
+    if (saved) {
+      const value = parseFloat(saved);
+      if (!isNaN(value)) {
+        this.temperature.set(value);
+      }
+    }
+  }
+
+  onTemperatureChange(value: number | null) {
+    this.temperature.set(value);
+    if (value !== null) {
+      localStorage.setItem(this.TEMPERATURE_KEY, value.toString());
+    } else {
+      localStorage.removeItem(this.TEMPERATURE_KEY);
+    }
+    this.recalculatePace();
+  }
+
+  private recalculatePace() {
+    const workout = this.selectedWorkout();
+    if (workout) {
+      this.selectWorkout(workout);
+    }
   }
 
   private loadCustomWorkouts() {
@@ -264,11 +357,28 @@ export class Start implements OnInit, AfterViewChecked {
     }
   }
 
-  onTimeChange(value: number | null) {
-    this.estimatedTime.set(value);
-    if (value !== null && value > 0) {
-      localStorage.setItem(this.STORAGE_KEY, value.toString());
-      this.previousTime.set(value);
+  onTimeMinutesChange(value: number | null) {
+    this.estimatedTimeMinutes.set(value);
+    this.updateEstimatedTime();
+  }
+
+  onTimeSecondsChange(value: number | null) {
+    this.estimatedTimeSeconds.set(value ?? 0);
+    this.updateEstimatedTime();
+  }
+
+  private updateEstimatedTime() {
+    const minutes = this.estimatedTimeMinutes();
+    const seconds = this.estimatedTimeSeconds();
+    if (minutes !== null && minutes >= 0) {
+      const total = minutes + seconds / 60;
+      this.estimatedTime.set(total > 0 ? total : null);
+      if (total > 0) {
+        localStorage.setItem(this.STORAGE_KEY, total.toString());
+        this.previousTime.set(total);
+      }
+    } else {
+      this.estimatedTime.set(null);
     }
   }
 
@@ -381,7 +491,10 @@ export class Start implements OnInit, AfterViewChecked {
         duration = convertDistanceToDuration(workout.distance, time);
       }
 
-      const pace = calculatePace(duration, time);
+      const elevation = this.elevationGain() ?? 0;
+      const wind = this.windSpeed() ?? 0;
+      const temp = this.temperature() ?? 0;
+      const pace = calculatePace(duration, time, elevation, wind, this.windType() === 'headwind', temp);
       this.suggestedPace.set(pace);
       console.log('Selected workout:', workout, 'Suggested pace:', pace, 'min/km', 'Calculated sets:', this.calculatedSets());
     } else {
@@ -525,7 +638,10 @@ export class Start implements OnInit, AfterViewChecked {
       duration = convertDistanceToDuration(workout.distance, time);
     }
 
-    const pace = calculatePace(duration, time);
+    const elevation = this.elevationGain() ?? 0;
+    const wind = this.windSpeed() ?? 0;
+    const temp = this.temperature() ?? 0;
+    const pace = calculatePace(duration, time, elevation, wind, this.windType() === 'headwind', temp);
     return this.formatPace(pace);
   }
 }

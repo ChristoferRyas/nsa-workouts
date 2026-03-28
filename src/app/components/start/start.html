@@ -8,7 +8,7 @@
         Workout Settings @if (isInputSectionCollapsed() && estimatedTime() !== null &&
         totalIntervalTime() !== null) {
         <span class="settings-preview">
-          (10km: {{ estimatedTime() }}min | Total: {{ totalIntervalTime() }}min)
+          (10km: {{ estimatedTimeMinutes() }}:{{ (estimatedTimeSeconds() | number:'2.0-0') }}min | Total: {{ totalIntervalTime() }}min)
         </span>
         }
       </h2>
@@ -17,27 +17,106 @@
     @if (!isInputSectionCollapsed()) {
     <div class="input-row">
       <div class="input-group">
-        <label for="estimatedTime">Estimated 10km time:</label>
+        <h3 class="input-header">Estimated 10km time</h3>
+        <p class="input-description">Your recent or target 10km race time. Used to calculate suggested interval paces.</p>
+        <div class="time-split-input">
+          <input
+            id="estimatedTimeMinutes"
+            type="number"
+            [ngModel]="estimatedTimeMinutes()"
+            (ngModelChange)="onTimeMinutesChange($event)"
+            placeholder="min"
+            min="0"
+            class="time-input time-input-short"
+          />
+          <span class="time-separator">:</span>
+          <input
+            id="estimatedTimeSeconds"
+            type="number"
+            [ngModel]="estimatedTimeSeconds()"
+            (ngModelChange)="onTimeSecondsChange($event)"
+            placeholder="sec"
+            min="0"
+            max="59"
+            class="time-input time-input-short"
+          />
+        </div>
+      </div>
+
+      <div class="input-group">
+        <h3 class="input-header"><label for="totalTime">Total interval time</label></h3>
+        <p class="input-description">Total minutes to spend running intervals, excluding rest. Used to calculate the number of sets.</p>
         <input
-          id="estimatedTime"
+          id="totalTime"
           type="number"
-          [ngModel]="estimatedTime()"
-          (ngModelChange)="onTimeChange($event)"
-          placeholder="Enter time in minutes"
+          [ngModel]="totalIntervalTime()"
+          (ngModelChange)="onTotalTimeChange($event)"
+          placeholder="min"
           min="1"
           class="time-input"
         />
       </div>
 
       <div class="input-group">
-        <label for="totalTime">Total interval time:</label>
+        <h3 class="input-header"><label for="elevationGain">Hills (avg m/km)</label></h3>
+        <p class="input-description">Average elevation gain per km on your route. Adds time to the suggested pace to compensate for climbing.</p>
         <input
-          id="totalTime"
+          id="elevationGain"
           type="number"
-          [ngModel]="totalIntervalTime()"
-          (ngModelChange)="onTotalTimeChange($event)"
-          placeholder="Enter total time"
-          min="1"
+          [ngModel]="elevationGain()"
+          (ngModelChange)="onElevationChange($event)"
+          placeholder="0"
+          min="0"
+          class="time-input"
+        />
+      </div>
+
+      <div class="input-group">
+        <h3 class="input-header"><label for="windSpeed">Wind (m/s)</label></h3>
+        <p class="input-description">Wind speed on your route. Slows your pace depending on direction.</p>
+        <input
+          id="windSpeed"
+          type="number"
+          [ngModel]="windSpeed()"
+          (ngModelChange)="onWindSpeedChange($event)"
+          placeholder="0"
+          min="0"
+          step="0.5"
+          class="time-input"
+        />
+        <div class="wind-type-group">
+          <label class="radio-label">
+            <input
+              type="radio"
+              name="windType"
+              value="headwind"
+              [checked]="windType() === 'headwind'"
+              (change)="onWindTypeChange('headwind')"
+            />
+            Headwind
+          </label>
+          <label class="radio-label">
+            <input
+              type="radio"
+              name="windType"
+              value="crosswind"
+              [checked]="windType() === 'crosswind'"
+              (change)="onWindTypeChange('crosswind')"
+            />
+            Crosswind
+          </label>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <h3 class="input-header"><label for="temperature">Temperature (°C)</label></h3>
+        <p class="input-description">Air temperature. Pace is adjusted above 15°C to account for heat impact on performance.</p>
+        <input
+          id="temperature"
+          type="number"
+          [ngModel]="temperature()"
+          (ngModelChange)="onTemperatureChange($event)"
+          placeholder="°C"
           class="time-input"
         />
       </div>
